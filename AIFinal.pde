@@ -9,6 +9,9 @@ StringDict names;
 String name;
 float textTime;
 String mainName;
+Delay delay;
+Reverb reverb;
+LowPass lowPass;
 
 void setup() {
   size(1275, 834);
@@ -19,7 +22,8 @@ void setup() {
   images = new PImage[665];
   sounds = new SoundFile[665];
   wheel = 0;
-  zpos = -1;
+  zpos = -1;  
+ 
   names = new StringDict(new String[][] {
     {"1", "The Smile"},
     {"10", "The Living Room"},
@@ -80,6 +84,24 @@ void setup() {
     {"648", "The Dig Site"},
     {"662", "The Desert"},
     });
+  reverb = new Reverb(this);
+  delay = new Delay(this);
+  lowPass = new LowPass(this);
+  for (int i = 0; i < sounds.length; i++) {
+    if (new File(dataPath(i + ".mp3")).exists()) {
+      sounds[i] =  new SoundFile(this, i + ".mp3");
+      sounds[i].loop();
+      sounds[i].amp(0);
+      //reverb.damp(1);
+      //reverb.wet(0.5);
+      //reverb.room(1);
+      delay.time(0.1);
+      delay.feedback(0.8);
+      delay.process(sounds[i], .5);
+      //reverb.process(sounds[i]);
+      
+    }
+  }
 }
 
 void draw() {
@@ -98,19 +120,12 @@ void draw() {
       fill(255, 0, 0);
       image(images[i], 0, 0);
       pop();
-      if (new File(dataPath(round(-zpos) + ".mp3")).exists()) {
-    file = new SoundFile(this, round(-zpos) + ".mp3");
-    sounds[round(-zpos)] = file;
-    if(!sounds[round(-zpos)].isPlaying()){
-      sounds[round(-zpos)].play();
-    }
-  }
     } else {
       images[i] = null;
-      if(sounds[i] != null){
-       sounds[i].stop(); 
-      }
-      
+    }
+    if (sounds[i] != null) {
+      sounds[i].amp(max(0, min(map(abs(-zpos - i), 0, 8, .015, 0), .01)));
+      sounds[i].rate(max(0, min(map(abs(-zpos - i), 0, 8, 1, 0.1), 1)));
     }
   }
   zpos += wheel;
@@ -129,9 +144,9 @@ void draw() {
   fill(255, min(200, textTime));
   textSize(44);
   text(mainName, width/2, 70);
-  
-  
-  
+
+
+
 
   fill(255);
   if (mouseY > height - 65 && mouseY < height - 35) {
