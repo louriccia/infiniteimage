@@ -22,7 +22,7 @@ void setup() {
   images = new PImage[665];
   sounds = new SoundFile[665];
   wheel = 0;
-  zpos = -1;
+  zpos = random(-665, -1);
 
   names = new StringDict(new String[][] {
     {"1", "a close up of a person wearing a suit and tie"},
@@ -223,7 +223,7 @@ void draw() {
         i = 10;
       }
     }
-    
+
     if (name != null) {
       textSize(14);
       text(name, mouseX, height - 70);
@@ -239,7 +239,9 @@ void draw() {
   }
   fill(255, min(255, map(mouseY, height*3/5, height, 0, 255)));
   textSize(28);
-  text(mainName, width/2, height - 100);
+  if (mainName != null) {
+    text(mainName, width/2, height - 100);
+  }
 }
 
 void mouseWheel(MouseEvent event) {
