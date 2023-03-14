@@ -194,7 +194,8 @@ void draw() {
     }
     if (sounds[i] != null) {
       sounds[i].amp(max(0, min(map(abs(-zpos - i), 0, 7, .01, 0), .01)));
-      sounds[i].rate(max(0.01, min(map(abs(-zpos - i), 0, 7, 1.2, 0.8), 1)));
+      //sounds[i].rate(max(0.01, min(map(abs(-zpos - i), 0, 7, 1.2, 0.8), 1)));
+      sounds[i].rate(max(0.01, min(map(-zpos - i, -7, 7, 1.2, 0.8), 1.2)));
     }
   }
   zpos += wheel;
