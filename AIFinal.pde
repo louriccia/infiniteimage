@@ -18,7 +18,8 @@ void setup() {
   ellipseMode(CENTER);
   rectMode(CENTER);
   textAlign(CENTER);
-
+  frameRate(20);
+//fullScreen();
   images = new PImage[665];
   sounds = new SoundFile[665];
   wheel = 0;
@@ -175,6 +176,7 @@ void setup() {
 
 void draw() {
   background(0);
+  
   fill(255);
   push();
   translate(width/2 - (mouseX - width/2)*.75, height/2 - (mouseY - height/2)*.75);
@@ -183,6 +185,7 @@ void draw() {
     if (-i -3<= zpos && -i > zpos) {
       if (images[i] == null) {
         images[i]=loadImage("image (" + str(i+1) + ").jpg");
+        //images[i].resize(583, 357);
       }
       push();
       scale(pow(2, zpos + i + 2));
