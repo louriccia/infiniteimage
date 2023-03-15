@@ -176,6 +176,8 @@ function draw() {
   background(0);
   fill(255);
   text("use the scrollwheel to move", width / 2, height / 2)
+  textSize(map(abs(wheel), 0, 0.05, 18, 28))
+  text("loading images...", width/2, height*2/3)
   push();
   translate(width / 2 - (mouseX - width / 2) * .75, height / 2 - (mouseY - height / 2) * .75);
   reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
