@@ -170,7 +170,7 @@ function setup() {
       reverb.process(sounds[i], 3, 2)
     }
   }
-}
+} 
 
 function draw() {
   background(0);
