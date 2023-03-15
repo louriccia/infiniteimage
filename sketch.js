@@ -1,8 +1,10 @@
 let wheel;
 let zpos;
 let barheight;
-let name =''
+let name = ''
 let mainName = ""
+let reverb
+let distortion
 let images = []
 let sounds = []
 let names = {
@@ -132,7 +134,22 @@ let names = {
   "652": "a person jumping a snow board in the air",
   "657": "a person on a surfboard in the water",
   "662": "a person on a surfboard in the water",
-  "665": "a vase of flowers sitting on a table"}
+  "665": "a vase of flowers sitting on a table"
+}
+let soundmap = [1, 6, 10, 15, 19, 23, 27, 33, 38, 43, 48, 53, 58, 64, 69, 77, 83, 88, 95, 101, 106, 111, 116, 124, 133, 142, 148, 153, 158, 163, 168, 173, 178, 182, 190, 195, 200, 205, 210, 215, 220, 225, 231, 236, 241, 247, 253, 258, 264, 270, 277, 282, 287, 292, 297, 302, 307, 312, 317, 324, 328, 333, 336, 340, 345, 350, 355, 359, 364, 369, 374, 378, 383, 388, 393, 398, 402, 407, 412, 417, 421, 426, 431, 437, 444, 452, 457, 463, 469, 473, 478, 482, 487, 492, 497, 503, 511, 516, 522, 527, 532, 537, 542, 547, 551, 556, 561, 566, 571, 576, 580, 584, 589, 594, 599, 604, 612, 620, 625, 630, 635, 640, 648, 652, 657, 662, 665]
+
+function preload() {
+  for (let i = 0; i < 665; i++) {
+    images.push(new p5.Image(1167, 714))
+    if (soundmap.includes(i)) {
+      let sound = loadSound('./sounds/' + i + ".mp3")
+      sounds.push(sound)
+    } else {
+      sounds.push(null)
+    }
+  }
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   imageMode(CENTER);
@@ -143,60 +160,53 @@ function setup() {
   //sounds = new SoundFile[665];
   wheel = 0;
   zpos = random(-665, -1);
-  for(let i = 0; i < 665; i++){
-    images.push(new p5.Image(1167, 714))
-  }
- 
-  // reverb = new Reverb(this);
-  // delay = new Delay(this);
-  // lowPass = new LowPass(this);
-  // for (int i = 0; i < sounds.length; i++) {
-  //   if (new File(dataPath(i + ".mp3")).exists()) {
-  //     sounds[i] =new SoundFile(this, i + ".mp3");
-  //     sounds[i].loop();
-  //     sounds[i].amp(0);
-  //     //reverb.damp(1);
-  //     //reverb.wet(0.5);
-  //     //reverb.room(1);
 
-  //     delay.feedback(0.6);
-  //     delay.process(sounds[i], .25);
-  //     delay.time(0.4);
-  //     //reverb.process(sounds[i]);
-  //   }
-  // }
+  reverb = new p5.Reverb();
+  distortion = new p5.Distortion()
+  
+  for (let i = 0; i < sounds.length; i++) {
+    if (sounds[i]) {
+      sounds[i].disconnect()
+      reverb.process(sounds[i], 3, 2)
+    }
+  }
 }
 
 function draw() {
   background(0);
-  
   fill(255);
+  text("use the scrollwheel to move", width / 2, height / 2)
   push();
-  translate(width/2 - (mouseX - width/2)*.75, height/2 - (mouseY - height/2)*.75);
-
+  translate(width / 2 - (mouseX - width / 2) * .75, height / 2 - (mouseY - height / 2) * .75);
+  reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
+  distortion.drywet(map(abs(wheel), 0.04, 0.05, 0.1, 0.2))
   for (let i = images.length - 1; i > -1; i--) {
-    if (-i -3<= zpos && -i > zpos) {
+    if (-i - 4 <= zpos && -i > zpos) {
       if (images[i] == null) {
-        images[i]=loadImage("./images/image (" + str(i+1) + ").jpg");
+        images[i] = loadImage("./images/image (" + str(i + 1) + ").jpg");
         //images[i].resize(583, 357);
       }
       push();
-      scale(pow(2, zpos + i + 2));
+      scale(pow(2, zpos + i) * 3.5 * windowWidth / 1167);
       fill(255, 0, 0);
-      image(images[i], 0, 0);
+      tint(255, map(pow(2, zpos + i + 3), 1, .5, 255, 0))
+      image(images[i], -1, 0);
       pop();
     } else {
       images[i] = null;
     }
     if (sounds[i] != null) {
-      sounds[i].amp(max(0, min(map(abs(-zpos - i), 0, 7, .01, 0), .01)));
-      //sounds[i].rate(max(0.01, min(map(abs(-zpos - i), 0, 7, 1.2, 0.8), 1)));
-      sounds[i].rate(max(0.01, min(map(-zpos - i, -7, 7, 1.2, 0.8), 1.2)));
+      if (!sounds[i].isLooping()) {
+        sounds[i].loop()
+      }
+      sounds[i].setVolume(constrain(map(abs(-zpos - i), 0, 7, 3, 0), 0, 3));
+      sounds[i].rate(constrain(map(-zpos - i, -7, 7, 1.2, 0.8), 0.01, 1.2));
+      //sounds[i].rate(max(0.01, min(map(-zpos - i, -7, 7, 1.2, 0.8), 1.2)));
     }
   }
   zpos += wheel;
   zpos = max(min(-1, zpos), -666);
-  wheel = wheel * (1 - (0.1*33.33/(0.1*33.33+20)));
+  wheel = wheel * (1 - (0.01 * 33.33 / (0.01 * 33.33 + 50)));
   pop();
   noStroke();
 
@@ -209,12 +219,12 @@ function draw() {
   if (mouseY > height - 65 && mouseY < height - 35) {
     cursor(HAND);
     let size = min(15, map(Math.abs(mouseY - (height - 50)), 0, 15, 15, 5));
-    circle(50 + (-zpos/images.length)*(width - 100), height - 50, size);
-    rect(width/2, height -50, width -100, size/2);
+    circle(50 + (-zpos / images.length) * (width - 100), height - 50, size);
+    rect(width / 2, height - 50, width - 100, size / 2);
     let handPos = round(map(mouseX, 50, width - 50, 1, 665));
     name = null;
     for (let i = 0; i < 10; i++) {
-      let thisName = names[str(handPos -5 + i)];
+      let thisName = names[str(handPos - 5 + i)];
       if (thisName != null) {
         name = thisName;
         i = 10;
@@ -231,26 +241,34 @@ function draw() {
     fill(255);
     circle(mouseX, mouseY, 7);
     noStroke();
-    fill(255, min(120, map(mouseY, height*3/5, height, 0, 255)));
-    rect(width/2, height -50, width -100, 2);
+    fill(255, min(120, map(mouseY, height * 3 / 5, height, 0, 255)));
+    rect(width / 2, height - 50, width - 100, 2);
   }
-  fill(255, min(255, map(mouseY, height*3/5, height, 0, 255)));
+  fill(255, min(255, map(mouseY, height * 3 / 5, height, 0, 255)));
   textSize(28);
   if (mainName != null) {
-    text(mainName, width/2, height - 100);
+    text(mainName, width / 2, height - 100);
+  }
+
+  if (getAudioContext().state !== 'running') {
+    fill(255);
+    text("click for audio", width / 2, height / 4)
   }
 }
 
 function mouseWheel(event) {
   let e = event.delta;
-  wheel += e*.05;
-  wheel = max(-.1, min(wheel, 0.1));
+  wheel -= e * .00001;
+  wheel = constrain(wheel, -0.05, 0.05);
+  userStartAudio();
 }
 
 function mouseClicked() {
-  if (mouseY > height - 65 && mouseY < height - 35 && mouseX > 50 && mouseX < width-50) {
+  if (mouseY > height - 65 && mouseY < height - 35 && mouseX > 50 && mouseX < width - 50) {
     zpos = map(mouseX, 50, width - 50, -1, -665);
   }
+  userStartAudio();
+  console.log(getAudioContext().state, getOutputVolume(), sounds[1].isLooping())
 }
 
 function windowResized() {
