@@ -5,6 +5,8 @@ let mainName = ""
 let reverb
 let images = []
 let sounds = []
+let autoscroll = false
+let direction = -1
 let names = {
   "1": "a close up of a person wearing a suit and tie",
   "6": "a group of people standing around a table",
@@ -140,6 +142,7 @@ let soundcount = 0;
 let scrolled = false
 let loadloop = 0
 //loading animation solution from Dan Schiffman https://www.youtube.com/watch?v=UWgDKtvnjIU&ab_channel=TheCodingTrain
+
 function soundLoader(index, filename) {
   loadSound(filename, soundLoaded)
 
@@ -162,7 +165,7 @@ function setup() {
   rectMode(CENTER);
   textAlign(CENTER);
 
-  zpos = random(-600, -100 );
+  zpos = random(-600, -100);
   reverb = new p5.Reverb();
 
   for (let i = 0; i < 665; i++) {
@@ -175,17 +178,18 @@ function setup() {
 }
 
 function draw() {
+  textAlign(CENTER);
   if (loading) {
     background(0);
-    
+
     loadloop += 0.11
     stroke(255)
     strokeWeight(5)
-    translate(width/2, height/2)
-    fill (0)
-    for(let i = 0; i < 10; i++){
+    translate(width / 2, height / 2)
+    fill(0)
+    for (let i = 0; i < 10; i++) {
       stroke(map(pow(2, -i + loadloop), 0, 1, 0, 255))
-      rect(0, 0, pow(2, -i + loadloop) * windowWidth/2, pow(2, -i + loadloop) * windowHeight/2)
+      rect(0, 0, pow(2, -i + loadloop) * windowWidth / 2, pow(2, -i + loadloop) * windowHeight / 2)
     }
     fill(255)
     textSize(25)
@@ -195,8 +199,11 @@ function draw() {
     background(0);
     fill(255);
     push();
-   
-    translate(width / 2 - (mouseX - width / 2) * .75, height / 2 - (mouseY - height / 2) * .75);
+
+    translate(width / 2, height / 2);
+    if (!autoscroll) {
+      translate(- (mouseX - width / 2) * .75, - (mouseY - height / 2) * .75)
+    }
     reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
     for (let i = images.length - 1; i > -1; i--) {
       if (-i - 4 <= zpos && -i > zpos) {
@@ -220,9 +227,19 @@ function draw() {
         sounds[i].rate(constrain(map(-zpos - i, -7, 7, 1.2, 0.8), 0.01, 1.2));
       }
     }
-    zpos += wheel;
+    if (autoscroll) {
+      if (zpos > -1.5) {
+        direction = -1
+      }
+      if (zpos < -667.5) {
+        direction = 1
+      }
+      zpos += direction * 0.004
+    } else {
+      zpos += wheel;
+      wheel = wheel * (1 - (0.01 * 33.33 / (0.01 * 33.33 + 50)));
+    }
     zpos = constrain(zpos, -668, -1);
-    wheel = wheel * (1 - (0.01 * 33.33 / (0.01 * 33.33 + 50)));
     pop();
     noStroke();
 
@@ -252,13 +269,20 @@ function draw() {
         text(name, mouseX, height - 70);
       }
     } else {
-      noCursor();
+      if(mouseY > windowHeight - 40 && mouseX > windowWidth - 100){
+        cursor(HAND);
+      } else {
+        noCursor();
+      }
+      
       stroke(0);
       fill(255);
       stroke(0)
       strokeWeight(1)
       fill(255, map(abs(wheel), 0, 0.05, 255, 0))
-      circle(mouseX, mouseY, 10);
+      if(!autoscroll){
+        circle(mouseX, mouseY, 10);
+      }
       noStroke();
       fill(255, min(120, map(mouseY, height * 3 / 5, height, 0, 255)));
       rect(width / 2, height - 50, width - 100, 2);
@@ -268,10 +292,14 @@ function draw() {
     if (mainName != null) {
       text(mainName, width / 2, height - 100);
     }
-
-    if (!scrolled) {
+    textSize(20)
+    textAlign(RIGHT)
+    text("autoscroll", width - 10, height - 10)
+    textAlign(CENTER)
+    textSize(28)
+    if (!scrolled && !autoscroll) {
       fill(0, 100)
-      rect(windowWidth/2,windowHeight/2, windowWidth, windowHeight)
+      rect(windowWidth / 2, windowHeight / 2, windowWidth, windowHeight)
       fill(255);
       text("use the scroll wheel to move", width / 2, height / 2)
     }
@@ -279,21 +307,26 @@ function draw() {
       fill(255);
       text("click for audio", width / 2, height / 4)
     }
+    
     fill(255, map(zpos, -650, -668, 0, 255))
-    text("The infinite stretches beyond our sight,\n"+
-    "A never-ending expanse of light,\n"+
-    "But even the universe must come to an end,\n"+
-    "And all that was infinite will soon transcend.\n"+
-    "\n" +
-    "As time marches on, and the cosmos unwinds,\n"+
-    "The infinite will slip away from our minds,\n"+
-    "Yet in its absence, we'll find a new start,\n"+
-    "For even the end can ignite a spark.\n"+
-    "\n" +
-    "So let us not fear the end of infinity,\n"+
-    "But instead, embrace its finality,\n"+
-    "For in that final moment, we'll see,\n"+
-    "The birth of a new eternity.", width/2, height/3)
+    text("The infinite stretches beyond our sight,\n" +
+      "A never-ending expanse of light,\n" +
+      "But even the universe must come to an end,\n" +
+      "And all that was infinite will soon transcend.\n" +
+      "\n" +
+      "As time marches on, and the cosmos unwinds,\n" +
+      "The infinite will slip away from our minds,\n" +
+      "Yet in its absence, we'll find a new start,\n" +
+      "For even the end can ignite a spark.\n" +
+      "\n" +
+      "So let us not fear the end of infinity,\n" +
+      "But instead, embrace its finality,\n" +
+      "For in that final moment, we'll see,\n" +
+      "The birth of a new eternity.", width / 2, height / 3)
+
+    fill(255, map(zpos, -15, -5, 0, 255))
+    textAlign(RIGHT)
+    text("Louis La Riccia\nlouriccia@gmail.com", width - 50, height * 7 / 8)
   }
 
 }
@@ -309,6 +342,10 @@ function mouseWheel(event) {
 function mouseClicked() {
   if (mouseY > height - 65 && mouseY < height - 35 && mouseX > 50 && mouseX < width - 50) {
     zpos = map(mouseX, 50, width - 50, -1, -665);
+  }
+  if (mouseX > width - 100 && mouseY > height - 40){
+    autoscroll = !autoscroll
+    console.log("autoscroll")
   }
   userStartAudio();
 }
