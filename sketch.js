@@ -162,7 +162,7 @@ function setup() {
   rectMode(CENTER);
   textAlign(CENTER);
 
-  zpos = random(-600, -100);
+  zpos = random(-600, -100 );
   reverb = new p5.Reverb();
 
   for (let i = 0; i < 665; i++) {
