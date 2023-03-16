@@ -1,10 +1,8 @@
-let wheel;
-let zpos;
-let barheight;
+let wheel = 0
+let zpos = -1;
 let name = ''
 let mainName = ""
 let reverb
-let distortion
 let images = []
 let sounds = []
 let names = {
@@ -136,126 +134,168 @@ let names = {
   "662": "a person on a surfboard in the water",
   "665": "a vase of flowers sitting on a table"
 }
-let soundmap = [1, 6, 10, 15, 19, 23, 27, 33, 38, 43, 48, 53, 58, 64, 69, 77, 83, 88, 95, 101, 106, 111, 116, 124, 133, 142, 148, 153, 158, 163, 168, 173, 178, 182, 190, 195, 200, 205, 210, 215, 220, 225, 231, 236, 241, 247, 253, 258, 264, 270, 277, 282, 287, 292, 297, 302, 307, 312, 317, 324, 328, 333, 336, 340, 345, 350, 355, 359, 364, 369, 374, 378, 383, 388, 393, 398, 402, 407, 412, 417, 421, 426, 431, 437, 444, 452, 457, 463, 469, 473, 478, 482, 487, 492, 497, 503, 511, 516, 522, 527, 532, 537, 542, 547, 551, 556, 561, 566, 571, 576, 580, 584, 589, 594, 599, 604, 612, 620, 625, 630, 635, 640, 648, 652, 657, 662, 665]
+let soundmap = [1, 6, 10, 15, 19, 23, 27, 33, 38, 43, 48, 53, 58, 64, 69, 77, 83, 88, 95, 101, 106, 111, 116, 124, 133, 142, 148, 153, 158, 163, 168, 173, 178, 182, 190, 195, 200, 205, 210, 215, 220, 225, 231, 236, 241, 247, 253, 258, 264, 270, 277, 282, 287, 292, 297, 302, 307, 312, 317, 324, 328, 333, 336, 340, 345, 350, 355, 359, 364, 369, 374, 378, 383, 388, 393, 398, 402, 407, 412, 417, 421, 426, 431, 437, 444, 452, 457, 463, 469, 473, 478, 482, 487, 492, 497, 503, 511, 516, 522, 527, 532, 537, 542, 547, 551, 556, 561, 566, 571, 576, 580, 584, 589, 594, 599, 604, 612, 620, 625, 630, 635, 640, 648, 652, 657, 662, 664]
+let loading = true
+let soundcount = 0;
+let scrolled = false
+let loadloop = 0
+//loading animation solution from Dan Schiffman https://www.youtube.com/watch?v=UWgDKtvnjIU&ab_channel=TheCodingTrain
+function soundLoader(index, filename) {
+  loadSound(filename, soundLoaded)
 
-function preload() {
-  for (let i = 0; i < 665; i++) {
-    images.push(new p5.Image(1167, 714))
-    if (soundmap.includes(i)) {
-      let sound = loadSound('./sounds/' + i + ".mp3")
-      sounds.push(sound)
-    } else {
-      sounds.push(null)
+  function soundLoaded(sound) {
+    sounds[index] = sound
+    sounds[index].disconnect()
+    reverb.process(sounds[index], 3, 2)
+    soundcount++
+    if (soundcount == soundmap.length) {
+      loading = false
     }
   }
 }
 
 function setup() {
+  background(0);
   createCanvas(windowWidth, windowHeight);
   imageMode(CENTER);
   ellipseMode(CENTER);
   rectMode(CENTER);
   textAlign(CENTER);
 
-  //sounds = new SoundFile[665];
-  wheel = 0;
-  zpos = random(-665, -1);
-
+  zpos = random(-600, -100);
   reverb = new p5.Reverb();
-  distortion = new p5.Distortion()
-  
-  for (let i = 0; i < sounds.length; i++) {
-    if (sounds[i]) {
-      sounds[i].disconnect()
-      reverb.process(sounds[i], 3, 2)
+
+  for (let i = 0; i < 665; i++) {
+    images.push(null)
+    if (soundmap.includes(i)) {
+      soundLoader(i, './sounds/' + i + ".mp3")
     }
   }
-} 
+
+}
 
 function draw() {
-  background(0);
-  fill(255);
-  text("use the scrollwheel to move", width / 2, height / 2)
-  textSize(map(abs(wheel), 0, 0.05, 18, 28))
-  text("loading images...", width/2, height*2/3)
-  push();
-  translate(width / 2 - (mouseX - width / 2) * .75, height / 2 - (mouseY - height / 2) * .75);
-  reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
-  distortion.drywet(map(abs(wheel), 0.04, 0.05, 0.1, 0.2))
-  for (let i = images.length - 1; i > -1; i--) {
-    if (-i - 4 <= zpos && -i > zpos) {
-      if (images[i] == null) {
-        images[i] = loadImage("./images/image (" + str(i + 1) + ").jpg");
-        //images[i].resize(583, 357);
-      }
-      push();
-      scale(pow(2, zpos + i) * 3.5 * windowWidth / 1167);
-      fill(255, 0, 0);
-      tint(255, map(pow(2, zpos + i + 3), 1, .5, 255, 0))
-      image(images[i], -1, 0);
-      pop();
-    } else {
-      images[i] = null;
+  if (loading) {
+    background(0);
+    
+    loadloop += 0.11
+    stroke(255)
+    strokeWeight(5)
+    translate(width/2, height/2)
+    fill (0)
+    for(let i = 0; i < 10; i++){
+      stroke(map(pow(2, -i + loadloop), 0, 1, 0, 255))
+      rect(0, 0, pow(2, -i + loadloop) * windowWidth/2, pow(2, -i + loadloop) * windowHeight/2)
     }
-    if (sounds[i] != null) {
-      if (!sounds[i].isLooping()) {
-        sounds[i].loop()
-      }
-      sounds[i].setVolume(constrain(map(abs(-zpos - i), 0, 7, 3, 0), 0, 3));
-      sounds[i].rate(constrain(map(-zpos - i, -7, 7, 1.2, 0.8), 0.01, 1.2));
-      //sounds[i].rate(max(0.01, min(map(-zpos - i, -7, 7, 1.2, 0.8), 1.2)));
-    }
-  }
-  zpos += wheel;
-  zpos = max(min(-1, zpos), -666);
-  wheel = wheel * (1 - (0.01 * 33.33 / (0.01 * 33.33 + 50)));
-  pop();
-  noStroke();
-
-  let tempName = names[String(Math.round(-zpos))];
-  if (tempName != null) {
-    mainName = tempName;
-  }
-
-  fill(255);
-  if (mouseY > height - 65 && mouseY < height - 35) {
-    cursor(HAND);
-    let size = min(15, map(Math.abs(mouseY - (height - 50)), 0, 15, 15, 5));
-    circle(50 + (-zpos / images.length) * (width - 100), height - 50, size);
-    rect(width / 2, height - 50, width - 100, size / 2);
-    let handPos = round(map(mouseX, 50, width - 50, 1, 665));
-    name = null;
-    for (let i = 0; i < 10; i++) {
-      let thisName = names[str(handPos - 5 + i)];
-      if (thisName != null) {
-        name = thisName;
-        i = 10;
-      }
-    }
-
-    if (name != null) {
-      textSize(14);
-      text(name, mouseX, height - 70);
-    }
+    fill(255)
+    textSize(25)
+    noStroke()
+    text("loading...", 0, 0)
   } else {
-    noCursor();
-    stroke(0);
+    background(0);
     fill(255);
-    circle(mouseX, mouseY, 7);
+    push();
+   
+    translate(width / 2 - (mouseX - width / 2) * .75, height / 2 - (mouseY - height / 2) * .75);
+    reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
+    for (let i = images.length - 1; i > -1; i--) {
+      if (-i - 4 <= zpos && -i > zpos) {
+        if (images[i] == null) {
+          images[i] = loadImage("./images/image (" + str(i + 1) + ").jpg");
+        }
+        push();
+        scale(pow(2, zpos + i) * 3.5 * max(windowWidth / 1167, windowHeight / 714));
+        fill(255, 0, 0);
+        tint(255, map(pow(2, zpos + i + 3), 1, .5, 255, 0))
+        image(images[i], -1, 0);
+        pop();
+      } else {
+        images[i] = null;
+      }
+      if (sounds[i] != null) {
+        if (!sounds[i].isLooping()) {
+          sounds[i].loop()
+        }
+        sounds[i].setVolume(constrain(map(abs(-zpos - i), 0, 7, 3, 0), 0, 3));
+        sounds[i].rate(constrain(map(-zpos - i, -7, 7, 1.2, 0.8), 0.01, 1.2));
+      }
+    }
+    zpos += wheel;
+    zpos = constrain(zpos, -668, -1);
+    wheel = wheel * (1 - (0.01 * 33.33 / (0.01 * 33.33 + 50)));
+    pop();
     noStroke();
-    fill(255, min(120, map(mouseY, height * 3 / 5, height, 0, 255)));
-    rect(width / 2, height - 50, width - 100, 2);
-  }
-  fill(255, min(255, map(mouseY, height * 3 / 5, height, 0, 255)));
-  textSize(28);
-  if (mainName != null) {
-    text(mainName, width / 2, height - 100);
+
+    let tempName = names[String(Math.round(-zpos))];
+    if (tempName != null) {
+      mainName = tempName;
+    }
+
+    fill(255);
+    if (mouseY > height - 65 && mouseY < height - 35) {
+      cursor(HAND);
+      let size = min(15, map(Math.abs(mouseY - (height - 50)), 0, 15, 15, 5));
+      circle(50 + (-zpos / images.length) * (width - 100), height - 50, size);
+      rect(width / 2, height - 50, width - 100, size / 2);
+      let handPos = round(map(mouseX, 50, width - 50, 1, 665));
+      name = null;
+      for (let i = 0; i < 10; i++) {
+        let thisName = names[str(handPos - 5 + i)];
+        if (thisName != null) {
+          name = thisName;
+          i = 10;
+        }
+      }
+
+      if (name != null) {
+        textSize(14);
+        text(name, mouseX, height - 70);
+      }
+    } else {
+      noCursor();
+      stroke(0);
+      fill(255);
+      stroke(0)
+      strokeWeight(1)
+      fill(255, map(abs(wheel), 0, 0.05, 255, 0))
+      circle(mouseX, mouseY, 10);
+      noStroke();
+      fill(255, min(120, map(mouseY, height * 3 / 5, height, 0, 255)));
+      rect(width / 2, height - 50, width - 100, 2);
+    }
+    fill(255, min(255, map(mouseY, height * 3 / 5, height, 0, 255)));
+    textSize(28);
+    if (mainName != null) {
+      text(mainName, width / 2, height - 100);
+    }
+
+    if (!scrolled) {
+      fill(0, 100)
+      rect(windowWidth/2,windowHeight/2, windowWidth, windowHeight)
+      fill(255);
+      text("use the scroll wheel to move", width / 2, height / 2)
+    }
+    if (getAudioContext().state !== 'running') {
+      fill(255);
+      text("click for audio", width / 2, height / 4)
+    }
+    fill(255, map(zpos, -650, -668, 0, 255))
+    text("The infinite stretches beyond our sight,\n"+
+    "A never-ending expanse of light,\n"+
+    "But even the universe must come to an end,\n"+
+    "And all that was infinite will soon transcend.\n"+
+    "\n" +
+    "As time marches on, and the cosmos unwinds,\n"+
+    "The infinite will slip away from our minds,\n"+
+    "Yet in its absence, we'll find a new start,\n"+
+    "For even the end can ignite a spark.\n"+
+    "\n" +
+    "So let us not fear the end of infinity,\n"+
+    "But instead, embrace its finality,\n"+
+    "For in that final moment, we'll see,\n"+
+    "The birth of a new eternity.", width/2, height/3)
   }
 
-  if (getAudioContext().state !== 'running') {
-    fill(255);
-    text("click for audio", width / 2, height / 4)
-  }
 }
 
 function mouseWheel(event) {
@@ -263,6 +303,7 @@ function mouseWheel(event) {
   wheel -= e * .00001;
   wheel = constrain(wheel, -0.05, 0.05);
   userStartAudio();
+  scrolled = true;
 }
 
 function mouseClicked() {
@@ -270,7 +311,6 @@ function mouseClicked() {
     zpos = map(mouseX, 50, width - 50, -1, -665);
   }
   userStartAudio();
-  console.log(getAudioContext().state, getOutputVolume(), sounds[1].isLooping())
 }
 
 function windowResized() {
