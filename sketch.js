@@ -148,7 +148,6 @@ function soundLoader(index, filename) {
 
   function soundLoaded(sound) {
     sounds[index] = sound
-    console.log('loaded sound', index)
     sounds[index].disconnect()
     reverb.process(sounds[index], 3, 2)
     soundcount++
@@ -171,20 +170,16 @@ function setup() {
 
   for (let i = 0; i < 665; i++) {
     images.push(null)
-    if (soundmap.includes(i) && windowWidth > 400) {
+    if (soundmap.includes(i)) {
       soundLoader(i, './sounds/' + i + ".mp3")
     }
   }
-  if(windowWidth <=400){
-    loading = false
-  }
-  console.log(windowWidth, windowHeight)
+
 }
 
 function draw() {
   textAlign(CENTER);
   if (loading) {
-    console.log(windowWidth, windowHeight)
     background(0);
 
     loadloop += 0.11
@@ -209,7 +204,7 @@ function draw() {
     if (!autoscroll) {
       translate(- (mouseX - width / 2) * .75, - (mouseY - height / 2) * .75)
     }
-    //reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
+    reverb.drywet(map(abs(wheel), 0, 0.05, 0.1, 1))
     for (let i = images.length - 1; i > -1; i--) {
       if (-i - 4 <= zpos && -i > zpos) {
         if (images[i] == null) {
@@ -255,7 +250,7 @@ function draw() {
 
     fill(255);
     if (mouseY > height - 65 && mouseY < height - 35) {
-      //cursor(HAND);
+      cursor(HAND);
       let size = min(15, map(Math.abs(mouseY - (height - 50)), 0, 15, 15, 5));
       circle(50 + (-zpos / images.length) * (width - 100), height - 50, size);
       rect(width / 2, height - 50, width - 100, size / 2);
