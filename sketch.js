@@ -148,6 +148,7 @@ function soundLoader(index, filename) {
 
   function soundLoaded(sound) {
     sounds[index] = sound
+    console.log('loaded sound', index)
     sounds[index].disconnect()
     reverb.process(sounds[index], 3, 2)
     soundcount++
@@ -177,11 +178,13 @@ function setup() {
   if(windowWidth <=400){
     loading = false
   }
+  console.log(windowWidth, windowHeight)
 }
 
 function draw() {
   textAlign(CENTER);
   if (loading) {
+    console.log(windowWidth, windowHeight)
     background(0);
 
     loadloop += 0.11
