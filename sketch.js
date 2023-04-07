@@ -145,7 +145,7 @@ let loadloop = 0
 let colour // Instructions: Attach an Xbox controller and press the play button.
 let controllers = []
 let debug = false;
-let deadzone = 0.08;
+let deadzone = 0.15;
 let colors = [];
 let colorCount = 6;
 let backgroundColorIndex = 0;
@@ -157,7 +157,7 @@ let deltaSize = 10;
 let maxSize = 100;
 let posX, posY;
 let moveSpeed = 5;
-
+let gamepad = false
 //loading animation solution from Dan Schiffman https://www.youtube.com/watch?v=UWgDKtvnjIU&ab_channel=TheCodingTrain
 //gamepad handling based on https://editor.p5js.org/jppoulter/sketches/xmb6DdZTg
 
@@ -193,13 +193,14 @@ function setup() {
     }
   }
 
-  window.addEventListener("gamepadconnected", function(e) {
+  window.addEventListener("gamepadconnected", function (e) {
     gamepadHandler(e, true);
+    gamepad = true
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
       e.gamepad.index, e.gamepad.id,
       e.gamepad.buttons.length, e.gamepad.axes.length);
   });
-  window.addEventListener("gamepaddisconnected", function(e) {
+  window.addEventListener("gamepaddisconnected", function (e) {
     console.log("Gamepad disconnected from index %d: %s",
       e.gamepad.index, e.gamepad.id);
     colour = color(120, 0, 0);
@@ -286,65 +287,68 @@ function draw() {
     }
 
     fill(255);
-    if (mouseY > height - 65 && mouseY < height - 35) {
-      cursor(HAND);
-      let size = min(15, map(Math.abs(mouseY - (height - 50)), 0, 15, 15, 5));
-      circle(50 + (-zpos / images.length) * (width - 100), height - 50, size);
-      rect(width / 2, height - 50, width - 100, size / 2);
-      let handPos = round(map(mouseX, 50, width - 50, 1, 665));
-      name = null;
-      for (let i = 0; i < 10; i++) {
-        let thisName = names[str(handPos - 5 + i)];
-        if (thisName != null) {
-          name = thisName;
-          i = 10;
-        }
-      }
-
-      if (name != null) {
-        textSize(14);
-        text(name, mouseX, height - 70);
-      }
-    } else {
-      if(mouseY > windowHeight - 40 && mouseX > windowWidth - 100){
+    if (!gamepad) {
+      if (mouseY > height - 65 && mouseY < height - 35) {
         cursor(HAND);
+        let size = min(15, map(Math.abs(mouseY - (height - 50)), 0, 15, 15, 5));
+        circle(50 + (-zpos / images.length) * (width - 100), height - 50, size);
+        rect(width / 2, height - 50, width - 100, size / 2);
+        let handPos = round(map(mouseX, 50, width - 50, 1, 665));
+        name = null;
+        for (let i = 0; i < 10; i++) {
+          let thisName = names[str(handPos - 5 + i)];
+          if (thisName != null) {
+            name = thisName;
+            i = 10;
+          }
+        }
+
+        if (name != null) {
+          textSize(14);
+          text(name, mouseX, height - 70);
+        }
       } else {
-        noCursor();
+        if (mouseY > windowHeight - 40 && mouseX > windowWidth - 100) {
+          cursor(HAND);
+        } else {
+          noCursor();
+        }
+
+        stroke(0);
+        fill(255);
+        stroke(0)
+        strokeWeight(1)
+        fill(255, map(abs(wheel), 0, 0.05, 255, 0))
+        if (!autoscroll) {
+          circle(mouseX, mouseY, 10);
+        }
+        noStroke();
+        fill(255, min(120, map(mouseY, height * 3 / 5, height, 0, 255)));
+        rect(width / 2, height - 50, width - 100, 2);
       }
-      
-      stroke(0);
-      fill(255);
-      stroke(0)
-      strokeWeight(1)
-      fill(255, map(abs(wheel), 0, 0.05, 255, 0))
-      if(!autoscroll){
-        circle(mouseX, mouseY, 10);
+      fill(255, min(255, map(mouseY, height * 3 / 5, height, 0, 255)));
+      textSize(28);
+      if (mainName != null) {
+        text(mainName, width / 2, height - 100);
       }
-      noStroke();
-      fill(255, min(120, map(mouseY, height * 3 / 5, height, 0, 255)));
-      rect(width / 2, height - 50, width - 100, 2);
+      textSize(20)
+      textAlign(RIGHT)
+      text("autoscroll", width - 10, height - 10)
     }
-    fill(255, min(255, map(mouseY, height * 3 / 5, height, 0, 255)));
-    textSize(28);
-    if (mainName != null) {
-      text(mainName, width / 2, height - 100);
-    }
-    textSize(20)
-    textAlign(RIGHT)
-    text("autoscroll", width - 10, height - 10)
+
     textAlign(CENTER)
     textSize(28)
     if (!scrolled && !autoscroll) {
       fill(0, 100)
       rect(windowWidth / 2, windowHeight / 2, windowWidth, windowHeight)
       fill(255);
-      text("use the scroll wheel to move", width / 2, height / 2)
+      text(gamepad ? "use connected gamepad to move" : "use the scroll wheel to move", width / 2, height / 2)
     }
     if (getAudioContext().state !== 'running') {
       fill(255);
       text("click for audio", width / 2, height / 4)
     }
-    
+
     fill(255, map(zpos, -650, -668, 0, 255))
     text("The infinite stretches beyond our sight,\n" +
       "A never-ending expanse of light,\n" +
@@ -368,8 +372,10 @@ function draw() {
 
 }
 
-function gamePad(){
+function gamePad() {
   var gamepads = navigator.getGamepads();
+
+
 
   for (let i in controllers) {
 
@@ -378,20 +384,40 @@ function gamePad(){
     if (controller.axes) {
       let axes = controller.axes;
       for (let axis = 0; axis < axes.length; axis++) {
+
         let val = controller.axes[axis];
-        if (axis == 0) {
+        if (axis == 0) { //LX
           if (abs(val) > deadzone) {
-            if ((posX <= 0 && val > 0) || (posX >= width && val < 0) || (posX > 0 && posX < width)) {
-              posX += moveSpeed * val;
-            }
+            mouseX = mouseX * .99 + (windowWidth / 2 + val * windowWidth / 2) * .01
+            gamepad = true
+          } else if (gamepad) {
+            mouseX = mouseX * .99 + (windowWidth / 2) * .01
           }
         }
-        if (axis == 1) {
+        if (axis == 1) { //LY (inverted)
           if (abs(val) > deadzone) {
-            if ((posY <= 0 && val > 0) || (posY >= height && val < 0) || (posY > 0 && posY < height)) {
-              posY += moveSpeed * val;
-            }
+            scrolled = true
+            wheel -= val * .0002;
+            //wheel = constrain(wheel, -0.05, 0.05);
+            gamepad = true
           }
+        }
+        if (axis == 2) { //RX
+          if (abs(val) > deadzone) {
+            mouseX = mouseX * .9 + (windowWidth / 2 + val * windowWidth / 2) * .1
+            gamepad = true
+          } else if (gamepad) {
+            mouseX = mouseX * .9 + (windowWidth / 2) * .1
+          }
+        }
+        if (axis == 3) { //RX
+          if (abs(val) > deadzone) {
+            mouseY = mouseY * .9 + (windowHeight / 2 + val * windowHeight / 2) * .1
+            gamepad = true
+          } else if (gamepad) {
+            mouseY = mouseY * .9 + (windowHeight / 2) * .1
+          }
+
         }
       }
     }
@@ -400,17 +426,18 @@ function gamePad(){
         let val = controller.buttons[btn];
         if (btn == 7) {
           if (buttonPressed(val, btn)) {
-            circle(posX, posY, size);
+            wheel += val.value*.0002
           }
         }
         if (btn == 6) {
           if (buttonPressed(val, btn)) {
-            background(colors[backgroundColorIndex]);
+            wheel -= val.value*.0002
           }
         }
       }
     }
   }
+
 }
 
 function gamepadHandler(event, connecting) {
@@ -424,7 +451,7 @@ function gamepadHandler(event, connecting) {
 }
 
 function buttonPressed(b, index) {
-  if (typeof(b) == "object") {
+  if (typeof (b) == "object") {
     if (b.pressed) {
       pressed[index] = true;
     } else {
@@ -448,11 +475,15 @@ function mouseClicked() {
   if (mouseY > height - 65 && mouseY < height - 35 && mouseX > 50 && mouseX < width - 50) {
     zpos = map(mouseX, 50, width - 50, -1, -665);
   }
-  if (mouseX > width - 100 && mouseY > height - 40){
+  if (mouseX > width - 100 && mouseY > height - 40) {
     autoscroll = !autoscroll
     console.log("autoscroll")
   }
   userStartAudio();
+}
+
+function mouseMoved() {
+  gamepad = false;
 }
 
 function windowResized() {
