@@ -141,7 +141,25 @@ let loading = true
 let soundcount = 0;
 let scrolled = false
 let loadloop = 0
+
+let colour // Instructions: Attach an Xbox controller and press the play button.
+let controllers = []
+let debug = false;
+let deadzone = 0.08;
+let colors = [];
+let colorCount = 6;
+let backgroundColorIndex = 0;
+let lineColorIndex = 0;
+let released = [];
+let pressed = [];
+let size = 10;
+let deltaSize = 10;
+let maxSize = 100;
+let posX, posY;
+let moveSpeed = 5;
+
 //loading animation solution from Dan Schiffman https://www.youtube.com/watch?v=UWgDKtvnjIU&ab_channel=TheCodingTrain
+//gamepad handling based on https://editor.p5js.org/jppoulter/sketches/xmb6DdZTg
 
 function soundLoader(index, filename) {
   loadSound(filename, soundLoaded)
@@ -175,9 +193,28 @@ function setup() {
     }
   }
 
+  window.addEventListener("gamepadconnected", function(e) {
+    gamepadHandler(e, true);
+    console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+      e.gamepad.index, e.gamepad.id,
+      e.gamepad.buttons.length, e.gamepad.axes.length);
+  });
+  window.addEventListener("gamepaddisconnected", function(e) {
+    console.log("Gamepad disconnected from index %d: %s",
+      e.gamepad.index, e.gamepad.id);
+    colour = color(120, 0, 0);
+    gamepadHandler(e, false);
+  });
+  for (var i = 0; i < 17; i++) {
+    released[i] = true;
+    pressed[i] = false;
+  }
+  posX = width / 2;
+  posY = height / 2;
 }
 
 function draw() {
+  gamePad()
   textAlign(CENTER);
   if (loading) {
     background(0);
@@ -329,6 +366,74 @@ function draw() {
     text("Louis La Riccia\nlouriccia@gmail.com", width - 50, height * 7 / 8)
   }
 
+}
+
+function gamePad(){
+  var gamepads = navigator.getGamepads();
+
+  for (let i in controllers) {
+
+    let controller = gamepads[i];
+
+    if (controller.axes) {
+      let axes = controller.axes;
+      for (let axis = 0; axis < axes.length; axis++) {
+        let val = controller.axes[axis];
+        if (axis == 0) {
+          if (abs(val) > deadzone) {
+            if ((posX <= 0 && val > 0) || (posX >= width && val < 0) || (posX > 0 && posX < width)) {
+              posX += moveSpeed * val;
+            }
+          }
+        }
+        if (axis == 1) {
+          if (abs(val) > deadzone) {
+            if ((posY <= 0 && val > 0) || (posY >= height && val < 0) || (posY > 0 && posY < height)) {
+              posY += moveSpeed * val;
+            }
+          }
+        }
+      }
+    }
+    if (controller.buttons) {
+      for (var btn = 0; btn < controller.buttons.length; btn++) {
+        let val = controller.buttons[btn];
+        if (btn == 7) {
+          if (buttonPressed(val, btn)) {
+            circle(posX, posY, size);
+          }
+        }
+        if (btn == 6) {
+          if (buttonPressed(val, btn)) {
+            background(colors[backgroundColorIndex]);
+          }
+        }
+      }
+    }
+  }
+}
+
+function gamepadHandler(event, connecting) {
+  let gamepad = event.gamepad;
+  if (connecting) {
+    print("Connecting to controller " + gamepad.index);
+    controllers[gamepad.index] = gamepad;
+  } else {
+    delete controllers[gamepad.index];
+  }
+}
+
+function buttonPressed(b, index) {
+  if (typeof(b) == "object") {
+    if (b.pressed) {
+      pressed[index] = true;
+    } else {
+      pressed[index] = false;
+      released[index] = true;
+    }
+    return pressed[index]; // binary 
+  }
+  return b > 0.9; // analog value
 }
 
 function mouseWheel(event) {
